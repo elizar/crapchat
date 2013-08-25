@@ -1,10 +1,9 @@
 # CRAPCHAT v 1.0
-
- Some crappy chat app for studying websocket server
+Some crappy chat app for studying websocket server
 
  ## REQUIREMENTS
- 	node.js
- 	a crappy browser with websocket support
+ 1. node.js
+ 2.	a crappy browser with websocket support
 
  ## RUN
- 	``` $ node ws.js ```
+ ``` $ node ws.js ```
