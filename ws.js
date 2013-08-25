@@ -1,34 +1,56 @@
 var net = require('net');
-var sockets = [];
 var wsp = require('./wsp');
+var sockets = [];
 var server = net.createServer(function(socket) {
 			if (sockets.indexOf(socket) === -1) {
+				socket.nick = Date.now().toString();
 				sockets.push(socket);
 			}
 
-			socket.on('end close', function(s) {
-				sockets.splice(sockets.indexOf(s), 1);
+			socket.on('end', function(s) {
+				console.log(sockets.indexOf(socket));
+				var deleted = sockets.splice(sockets.indexOf(socket), 1);
+				if (deleted.length > 0) {
+					sockets.forEach(function(s) {
+						s.write(new Buffer(wsp.encode('[-Server Notice-] ' + socket.nick + ' disconnected from server')));
+					});
+					console.log('Socket deleted');
+				}
 			});
 
 			socket.on('error', console.log);
 
 			socket.on('data', function(d) {
-				console.log(d[0]);
 				if (d.toString().indexOf('Sec-WebSocket-Key') === -1) {
-					
+					if (d[0] === 136) {
+						// if this is close frame exit this shit
+						socket.end();
+						return;
+					}
 					var txt = wsp.parse(d);
+					var isNickChanged = false,
+							oldNick = socket.nick;
+					if (txt.indexOf('/nick ') !== -1) {
+						// if change of nick is present
+						var at = txt.split(' ');
+						socket.nick = at[1];
+						socket.write(new Buffer(wsp.encode('You are now known as '+at[1])));
+						isNickChanged = true;
+					}
 					sockets.forEach(function(s) {
 						if (s.writable) {
-							s.write(new Buffer(wsp.encode(s.localAddress + ' says: ' + txt)));
+							if (isNickChanged) {
+								if (s !== socket)
+								s.write(new Buffer(wsp.encode('[-Server Notice-] ' + oldNick + ' is now known as ' + socket.nick)));
+							}
+							else
+							s.write(new Buffer(wsp.encode(socket.nick + ' says: ' + txt)));
 						} else {
-							// delete sockets if it's no longer writable
-							// this seems to fix google chromes weird socket issue
-							// when the client closes the browser it never sends any
-							// close frame
-							sockets.splice(sockets.indexOf(s), 1);
+							// end socket if it's not writable
+							// this is a fix of chrome's not sending close frame issue
+							s.end();
 						}
 					});
-
 					return;
 				}
 				// Handle handshake from client

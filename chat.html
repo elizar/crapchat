@@ -16,6 +16,12 @@
 			background-color: #efefef;
 			font: normal 95%/150% Arial, Helvetica, sans-serif;
 		}
+		#main-wrapper {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+		}
 		form {
 			width: 100%;
 			position: fixed;
@@ -45,13 +51,14 @@
 		}
 		ul {
 			list-style: none;
-			position: fixed;
-			top: 0;
 			width: 100%;
 		}
 		li {
 			border-bottom: 1px solid #dddddd;
-			padding: 3px 0;
+			padding: 3px 10px;
+		}
+		li.offset {
+			background-color: #ececec;
 		}
 	</style>
 </head>
@@ -106,8 +113,11 @@
 				var messageList = '';
 				var messageView = document.getElementById('message');
 				// reverse the order so latest message will be on top
+				var i = 0, offset;
 				self.logs.forEach(function (log) {
-					messageList += '<li class="message"> ' + log + '</li>';
+					offset = i % 2 == 0 ? 'offset' : '';
+					messageList += '<li class="message '+offset+'"> ' + log + '</li>';
+					i++;
 				});
 				messageView.innerHTML = messageList;
 			}
