@@ -1,141 +1,152 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-	<meta charset="UTF-8">
-	<title>Chat App</title>
-	<style type="text/css">
-		* {
-			margin: 0;
-			padding: 0;
-			margin: 0;
-			outline: none !important;
-			border: none;
-			line-height: 1.5em;
-		}
-		body {
-			background-color: #efefef;
-			font: normal 95%/150% Arial, Helvetica, sans-serif;
-		}
-		#main-wrapper {
-			position: relative;
-			width: 100%;
-			height: 100%;
-			overflow: auto;
-		}
-		form {
-			width: 100%;
-			position: fixed;
-			bottom: 0;
-		}
-		input {
-			border-top: 1px solid #999;
-			padding: 10px 5px;
-			font-size: 1.5em;
-			background-color: #ddd;
-			width: 100%;
-			-moz-box-shadow: 10px 1px 5px #aaa inset;
-			-webkit-box-shadow: 0px 1px 5px #aaa inset;
-			box-shadow: 0px 2px 5px #aaa inset;
-		}
-		input:focus {
-			border-top: 1px solid #333;
-			background-color: #ccc;
-		}
-		input[type="submit"] {
-			cursor: pointer;
-			border-top: 1px solid #000;
-		}
-		input[type="submit"]:hover {
-			cursor: pointer;
-			background-color: #aaa;
-		}
-		ul {
-			list-style: none;
-			width: 100%;
-		}
-		li {
-			border-bottom: 1px solid #dddddd;
-			padding: 3px 10px;
-		}
-		li.offset {
-			background-color: #ececec;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <title>Chat App</title>
+    <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+        margin: 0;
+        outline: none !important;
+        border: none;
+        line-height: 1.5em;
+    }
+    body {
+        background-color: #efefef;
+        font: normal 95%/150% Arial, Helvetica, sans-serif;
+    }
+    #main-wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        margin-bottom: 50px;
+        overflow: auto;
+    }
+    form {
+        width: 100%;
+        position: fixed;
+        bottom: 0;
+    }
+    input {
+        border-top: 1px solid #999;
+        padding: 10px 5px;
+        font-size: 1.5em;
+        background-color: #ddd;
+        width: 100%;
+        -moz-box-shadow: 10px 1px 5px #aaa inset;
+        -webkit-box-shadow: 0px 1px 5px #aaa inset;
+        box-shadow: 0px 2px 5px #aaa inset;
+    }
+    input:focus {
+        border-top: 1px solid #333;
+        background-color: #ccc;
+    }
+    input[type="submit"] {
+        cursor: pointer;
+        border-top: 1px solid #000;
+    }
+    input[type="submit"]:hover {
+        cursor: pointer;
+        background-color: #aaa;
+    }
+    ul {
+        list-style: none;
+        width: 100%;
+    }
+    li {
+        border-bottom: 1px solid #dddddd;
+        padding: 3px 10px;
+    }
+    li.offset {
+        background-color: #ececec;
+    }
+    </style>
 </head>
+
 <body>
-	<div id="main-wrapper">
-		<ul id="message">
-			<li class="message"><em>tibur says:</em> Test</li>
-		</ul>
-		<form action="/" id="chat-form">
-			<input type="text" class="chat-box" placeholder="Type something...">
-		</form>
-	</div>
-	<script type="text/javascript">
-		var Chat = {
-			url: 'ws://localhost:1337',
-			protocol: ['chat'],
-			logs: []
-		};
+    <div id="main-wrapper">
+        <ul id="message">
+            <li class="message">
+                <em>tibur says:</em>Test</li>
+        </ul>
+        <form action="/" id="chat-form">
+            <input type="text" class="chat-box" placeholder="Type something...">
+        </form>
+    </div>
+    <script type="text/javascript">
+    var Chat = {
+        url: 'ws://localhost:1337',
+        protocol: ['chat'],
+        logs: []
+    };
 
-		Chat.init = function() {
-			var self = this;
-			var ws = new WebSocket(self.url, self.protocol);
-			ws.onopen = handleOpen;
-			ws.onclose = handleClose;
-			ws.onmessage = handleMessage;
-			ws.onerror = handleError;
-			var form = document.getElementById('chat-form');
-			form.onsubmit = handleFormSubmit;
+    Chat.init = function() {
+        var self = this;
+        var ws = new WebSocket(self.url, self.protocol);
+        ws.onopen = handleOpen;
+        ws.onclose = handleClose;
+        ws.onmessage = handleMessage;
+        ws.onerror = handleError;
+        var form = document.getElementById('chat-form');
+        form.onsubmit = handleFormSubmit;
 
-			function handleOpen (e) {
-				if (e.currentTarget.readyState === 1) {
-					self.logs.push('Connected to server');
-					render();
-				}
-			}
-			function handleClose (e) {
-				//
-				console.log(e)
-				self.logs.push('››› Disconnected from server');
-				render();
-			}
-			function handleError (e) {
-				console.log(e);
-				self.logs.push('››› Error Connecting to server');
-				render();
-			}
-			function handleMessage (message) {
-				self.logs.push(message.data);
-				render();
-			}
-			function render () {
-				var messageList = '';
-				var messageView = document.getElementById('message');
-				// reverse the order so latest message will be on top
-				var i = 0, offset;
-				self.logs.forEach(function (log) {
-					offset = i % 2 == 0 ? 'offset' : '';
-					messageList += '<li class="message '+offset+'"> ' + log + '</li>';
-					i++;
-				});
-				messageView.innerHTML = messageList;
-			}
-			function handleFormSubmit (e) {
-				e.preventDefault();
-				var chatBox = this.querySelector('.chat-box');
-				ws.send(chatBox.value.trim());
-				chatBox.value = "";
-				chatBox.focus();
-			}
+        function handleOpen(e) {
+            if (e.currentTarget.readyState === 1) {
+                self.logs.push('Connected to server');
+                render();
+            }
+        }
 
-		};
+        function handleClose(e) {
+            //
+            console.log(e)
+            self.logs.push('››› Disconnected from server');
+            render();
+        }
 
-		window.onload = function() {
-			if (document.readyState === 'complete') {
-				Chat.init();
-			}
-		}
-	</script>
+        function handleError(e) {
+            console.log(e);
+            self.logs.push('››› Error Connecting to server');
+            render();
+        }
+
+        function handleMessage(message) {
+            self.logs.push(message.data);
+            render();
+        }
+
+        function render() {
+            var messageList = '';
+            var messageView = document.getElementById('message');
+            // reverse the order so latest message will be on top
+            var i = 0,
+                offset;
+            self.logs.forEach(function(log) {
+                offset = i % 2 == 0 ? 'offset' : '';
+                messageList += '<li class="message ' + offset + '"> ' + log + '</li>';
+                i++;
+            });
+            messageView.innerHTML = messageList;
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            var chatBox = this.querySelector('.chat-box');
+            ws.send(chatBox.value.trim());
+            chatBox.value = "";
+            chatBox.focus();
+        }
+
+    };
+
+    window.onload = function() {
+        if (document.readyState === 'complete') {
+            Chat.init();
+        }
+    }
+    </script>
 </body>
+
 </html>
