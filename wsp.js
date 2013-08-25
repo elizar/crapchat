@@ -1,3 +1,5 @@
+var crypto = require('crypto');
+
 exports.parse = function(d) {
 	var datalength = d[1] & 127;
 	var indexFirstMask = 2;
@@ -40,4 +42,25 @@ exports.encode = function(d) {
 		bytesFormatted.push(d.charCodeAt(i));
 	}
 	return bytesFormatted;
+};
+
+exports.handshake = function(d) {
+	var headers = d.toString().split('\r\n'),
+			parsedHeaders = {};
+	headers.forEach(function(text) {
+		if (text !== 'GET / HTTP/1.1' && text !== '') {
+			var textArray = text.split(':');
+			parsedHeaders[textArray[0]] = textArray[1].trim();
+		}
+	});
+	var swa = crypto.createHash('sha1')
+						.update(parsedHeaders['Sec-WebSocket-Key'] + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+						.digest('base64');
+	var response	= 'HTTP/1.1 101 Switching Protocols\r\n';
+			response += 'Upgrade: websocket\r\n';
+			response += 'Connection: Upgrade\r\n';
+			response += 'Sec-WebSocket-Accept: '+swa+'\r\n';
+			response += 'Sec-WebSocket-Protocol: chat\r\n';
+			response += '\r\n';
+	return response;
 };

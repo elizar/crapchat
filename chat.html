@@ -13,18 +13,27 @@
 			line-height: 1.5em;
 		}
 		body {
+			background-color: #efefef;
 			font: normal 95%/150% Arial, Helvetica, sans-serif;
-			padding: 100px;
+		}
+		form {
+			width: 100%;
+			position: fixed;
+			bottom: 0;
 		}
 		input {
-			border: 1px solid #000;
-			border-top: 2px solid #333;
+			border-top: 1px solid #999;
 			padding: 10px 5px;
 			font-size: 1.5em;
-			background-color: #efefef;
+			background-color: #ddd;
+			width: 100%;
+			-moz-box-shadow: 10px 1px 5px #aaa inset;
+			-webkit-box-shadow: 0px 1px 5px #aaa inset;
+			box-shadow: 0px 2px 5px #aaa inset;
 		}
 		input:focus {
-			background-color: #fff;
+			border-top: 1px solid #333;
+			background-color: #ccc;
 		}
 		input[type="submit"] {
 			cursor: pointer;
@@ -36,23 +45,24 @@
 		}
 		ul {
 			list-style: none;
+			position: fixed;
+			top: 0;
+			width: 100%;
 		}
 		li {
-			border-bottom: 1px solid #efefef;
+			border-bottom: 1px solid #dddddd;
 			padding: 3px 0;
 		}
 	</style>
 </head>
 <body>
 	<div id="main-wrapper">
-		<div class="chat"><h1 class="title">Chat App</h1></div>
-		<form action="/" id="chat-form">
-			<input type="text" class="chat-box">
-			<input type="submit" value="Send" class="submit-btn">
-		</form>
 		<ul id="message">
 			<li class="message"><em>tibur says:</em> Test</li>
 		</ul>
+		<form action="/" id="chat-form">
+			<input type="text" class="chat-box" placeholder="Type something...">
+		</form>
 	</div>
 	<script type="text/javascript">
 		var Chat = {
@@ -65,18 +75,30 @@
 			var self = this;
 			var ws = new WebSocket(self.url, self.protocol);
 			ws.onopen = handleOpen;
-			ws.onclose = handleOnClose;
-			ws.onmessage = handleOnMessage;
+			ws.onclose = handleClose;
+			ws.onmessage = handleMessage;
+			ws.onerror = handleError;
 			var form = document.getElementById('chat-form');
 			form.onsubmit = handleFormSubmit;
 
-			function handleOpen () {
+			function handleOpen (e) {
+				if (e.currentTarget.readyState === 1) {
+					self.logs.push('Connected to server');
+					render();
+				}
+			}
+			function handleClose (e) {
+				//
+				console.log(e)
+				self.logs.push('››› Disconnected from server');
 				render();
 			}
-			function handleOnClose () {
-				// TODO:
+			function handleError (e) {
+				console.log(e);
+				self.logs.push('››› Error Connecting to server');
+				render();
 			}
-			function handleOnMessage (message) {
+			function handleMessage (message) {
 				self.logs.push(message.data);
 				render();
 			}
@@ -85,7 +107,7 @@
 				var messageView = document.getElementById('message');
 				// reverse the order so latest message will be on top
 				self.logs.forEach(function (log) {
-					messageList += '<li class="message">' + log + '</li>';
+					messageList += '<li class="message"> ' + log + '</li>';
 				});
 				messageView.innerHTML = messageList;
 			}
@@ -93,6 +115,8 @@
 				e.preventDefault();
 				var chatBox = this.querySelector('.chat-box');
 				ws.send(chatBox.value.trim());
+				chatBox.value = "";
+				chatBox.focus();
 			}
 
 		};
