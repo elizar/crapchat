@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Chat App</title>
+	<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+			margin: 0;
+			outline: none !important;
+			border: none;
+			line-height: 1.5em;
+		}
+		body {
+			font: normal 95%/150% Arial, Helvetica, sans-serif;
+			padding: 100px;
+		}
+		input {
+			border: 1px solid #000;
+			border-top: 2px solid #333;
+			padding: 10px 5px;
+			font-size: 1.5em;
+			background-color: #efefef;
+		}
+		input:focus {
+			background-color: #fff;
+		}
+		input[type="submit"] {
+			cursor: pointer;
+			border-top: 1px solid #000;
+		}
+		input[type="submit"]:hover {
+			cursor: pointer;
+			background-color: #aaa;
+		}
+		ul {
+			list-style: none;
+		}
+		li {
+			border-bottom: 1px solid #efefef;
+			padding: 3px 0;
+		}
+	</style>
+</head>
+<body>
+	<div id="main-wrapper">
+		<div class="chat"><h1 class="title">Chat App</h1></div>
+		<form action="/" id="chat-form">
+			<input type="text" class="chat-box">
+			<input type="submit" value="Send" class="submit-btn">
+		</form>
+		<ul id="message">
+			<li class="message"><em>tibur says:</em> Test</li>
+		</ul>
+	</div>
+	<script type="text/javascript">
+		var Chat = {
+			url: 'ws://localhost:1337',
+			protocol: ['chat'],
+			logs: []
+		};
+
+		Chat.init = function() {
+			var self = this;
+			var ws = new WebSocket(self.url, self.protocol);
+			ws.onopen = handleOpen;
+			ws.onclose = handleOnClose;
+			ws.onmessage = handleOnMessage;
+			var form = document.getElementById('chat-form');
+			form.onsubmit = handleFormSubmit;
+
+			function handleOpen () {
+				render();
+			}
+			function handleOnClose () {
+				// TODO:
+			}
+			function handleOnMessage (message) {
+				self.logs.push(message.data);
+				render();
+			}
+			function render () {
+				var messageList = '';
+				var messageView = document.getElementById('message');
+				// reverse the order so latest message will be on top
+				self.logs.forEach(function (log) {
+					messageList += '<li class="message">' + log + '</li>';
+				});
+				messageView.innerHTML = messageList;
+			}
+			function handleFormSubmit (e) {
+				e.preventDefault();
+				var chatBox = this.querySelector('.chat-box');
+				ws.send(chatBox.value.trim());
+			}
+
+		};
+
+		window.onload = function() {
+			if (document.readyState === 'complete') {
+				Chat.init();
+			}
+		}
+	</script>
+</body>
+</html>
