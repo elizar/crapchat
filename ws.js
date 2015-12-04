@@ -1,6 +1,10 @@
-var net = require('net');
-var wsp = require('./wsp');
+'use strict';
+
+var net     = require('net');
+var wsp     = require('./wsp');
+
 var sockets = [];
+
 var server = net.createServer(function(socket) {
     if (sockets.indexOf(socket) === -1) {
         socket.nick = Date.now().toString();
@@ -8,7 +12,6 @@ var server = net.createServer(function(socket) {
     }
 
     socket.on('end', function(s) {
-        console.log(sockets.indexOf(socket));
         var deleted = sockets.splice(sockets.indexOf(socket), 1);
         if (deleted.length > 0) {
             sockets.forEach(function(s) {
@@ -40,10 +43,8 @@ var server = net.createServer(function(socket) {
             sockets.forEach(function(s) {
                 if (s.writable) {
                     if (isNickChanged) {
-                        if (s !== socket)
-                            s.write(new Buffer(wsp.encode('[-Server Notice-] ' + oldNick + ' is now known as ' + socket.nick)));
-                    } else
-                        s.write(new Buffer(wsp.encode(socket.nick + ' says: ' + txt)));
+                        if (s !== socket) s.write(new Buffer(wsp.encode('[-Server Notice-] ' + oldNick + ' is now known as ' + socket.nick)));
+                    } else s.write(new Buffer(wsp.encode(socket.nick + ' says: ' + txt)));
                 } else {
                     // end socket if it's not writable
                     // this is a fix of chrome's not sending close frame issue
@@ -59,7 +60,7 @@ var server = net.createServer(function(socket) {
     });
 
 });
-server.listen(1337, function() {
+server.listen(31337, function() {
     console.log('Server running on port 3000');
 });
 
@@ -73,3 +74,4 @@ function web(req, res) {
     });
     res.end(require('fs').readFileSync('./chat.html'));
 }
+
